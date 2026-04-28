@@ -20,9 +20,8 @@ static void ng_poll_fn(struct work_struct *work)
         spin_unlock(&sb->lock);
     }
 
-    if (!kthread_should_stop())
-        queue_delayed_work(ng_wq, &ng_poll_work,
-                           msecs_to_jiffies(ng_poll_ms));
+    queue_delayed_work(ng_wq, &ng_poll_work,
+                       msecs_to_jiffies(ng_poll_ms));
 }
 
 int ng_poller_init(void)
