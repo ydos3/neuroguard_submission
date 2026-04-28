@@ -12,7 +12,7 @@ neuroguard-objs := src/main.o     \
 KDIR ?= /lib/modules/$(shell uname -r)/build
 PWD  := $(shell pwd)
 
-ccflags-y := -I$(PWD)/include -Wall -Wno-unused-function
+ccflags-y := -I$(M) -I$(M)/include -Wall -Wno-unused-function
 
 all:
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
