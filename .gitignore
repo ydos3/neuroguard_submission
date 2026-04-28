@@ -1,0 +1,22 @@
+# Build artifacts
+*.o
+*.ko
+*.mod
+*.mod.c
+*.cmd
+*.order
+*.symvers
+*.tmp_versions/
+.tmp_versions/
+modules.order
+Module.symvers
+
+# Compiled tools
+tools/neuroguard-ctl
+tests/test_anomaly
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/

@@ -1,0 +1,9 @@
+# Force LF line endings for all text files
+* text=auto eol=lf
+
+# Explicitly set source files
+*.c text eol=lf
+*.h text eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+Makefile text eol=lf

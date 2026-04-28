@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Device Driver Idea – NeuroGuard</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Source+Code+Pro:wght@400&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Crimson Text', Georgia, serif;
+      font-size: 11.5pt;
+      line-height: 1.6;
+      color: #111;
+      background: #fff;
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      padding: 18mm 20mm 16mm;
+    }
+
+    /* ── Header ── */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 2px solid #111;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+    .top-bar .inst {
+      font-size: 9pt;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #444;
+    }
+    .top-bar .dates {
+      font-size: 9pt;
+      text-align: right;
+      color: #444;
+      line-height: 1.5;
+    }
+
+    h1 {
+      font-size: 17pt;
+      font-weight: 600;
+      line-height: 1.2;
+      margin-bottom: 3px;
+    }
+    .subtitle {
+      font-size: 10.5pt;
+      font-style: italic;
+      color: #555;
+      margin-bottom: 7px;
+    }
+    .authors {
+      font-size: 10.5pt;
+      margin-bottom: 12px;
+    }
+
+    /* ── Abstract box ── */
+    .abstract {
+      border: 1px solid #999;
+      padding: 9px 13px;
+      margin-bottom: 13px;
+      background: #fafafa;
+    }
+    .abstract strong { font-size: 9.5pt; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* ── Two-column body ── */
+    .columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 18px;
+    }
+
+    h2 {
+      font-size: 10.5pt;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid #bbb;
+      padding-bottom: 2px;
+      margin: 11px 0 5px;
+    }
+
+    p { margin-bottom: 6px; text-align: justify; hyphens: auto; font-size: 10.8pt; }
+
+    ul { margin: 3px 0 6px 16px; }
+    li { margin-bottom: 2px; font-size: 10.5pt; }
+
+    code {
+      font-family: 'Source Code Pro', 'Courier New', monospace;
+      font-size: 9pt;
+      background: #f0f0f0;
+      padding: 0 4px;
+      border-radius: 2px;
+    }
+
+    pre {
+      font-family: 'Source Code Pro', 'Courier New', monospace;
+      font-size: 8.4pt;
+      background: #f4f4f4;
+      border-left: 2.5px solid #888;
+      padding: 6px 10px;
+      margin: 6px 0;
+      line-height: 1.5;
+      white-space: pre;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9.5pt;
+      margin: 5px 0 8px;
+    }
+    th {
+      background: #222;
+      color: #fff;
+      padding: 3px 7px;
+      text-align: left;
+      font-weight: 600;
+    }
+    td { padding: 3px 7px; border-bottom: 1px solid #ddd; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+
+    .span-full {
+      grid-column: 1 / -1;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 14px;
+      border-top: 1px solid #bbb;
+      padding-top: 6px;
+      font-size: 8.8pt;
+      color: #777;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    @media print {
+      body { padding: 14mm 17mm; }
+      @page { size: A4; margin: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ HEADER ═══════════════════ -->
+<div class="top-bar">
+  <div class="inst">Department of Computer Science &amp; Engineering<br>Systems Programming — Device Drivers</div>
+  <div class="dates">
+    Idea Submission: April 15, 2026<br>
+    Final Demo: April 26, 2026
+  </div>
+</div>
+
+<h1>NeuroGuard: A Memory Isolation &amp; Anomaly Detection Kernel Driver</h1>
+<div class="subtitle">Device Driver Idea Submission</div>
+<div class="authors"><strong>Authors:</strong> Yuval &nbsp;&amp;&nbsp; Prajakta</div>
+
+<!-- ═══════════════════ ABSTRACT ═══════════════════ -->
+<div class="abstract">
+  <strong>Abstract —</strong>
+  We propose <strong>NeuroGuard</strong>, a Linux kernel character device driver that monitors 
+  per-process memory allocation behaviour and detects anomalies using a lightweight, in-kernel 
+  Exponential Weighted Moving Average (EWMA) scoring engine. The driver exposes 
+  <code>/dev/neuroguard</code> for event streaming, sysfs for runtime tuning, and procfs for 
+  human-readable status. When a process's anomaly score breaches a threshold, the driver can 
+  alert, throttle (SIGSTOP), or terminate (SIGKILL) the offending process without any user-space 
+  polling loop.
+</div>
+
+<!-- ═══════════════════ TWO-COLUMN BODY ═══════════════════ -->
+<div class="columns">
+
+  <!-- ── Col 1 ── -->
+  <div>
+
+    <h2>1. Motivation</h2>
+    <p>
+      Modern Linux offers no programmable interface that gives a user-space agent fine-grained,
+      real-time telemetry about memory allocation <em>rates</em>. Cgroups enforce hard limits but
+      cannot detect a spike before it becomes fatal. This driver fills that gap for three 
+      practical scenarios: detecting heap-spray security attacks, containing runaway ML inference 
+      jobs, and notifying operators of memory leaks in production services before they cause OOM 
+      kills.
+    </p>
+
+    <h2>2. Architecture</h2>
+<pre>User Space
+┌────────────────────────────────┐
+│  neuroguard-ctl (CLI agent)    │
+│  attach · detach · monitor     │
+└─────────────┬──────────────────┘
+              │  /dev/neuroguard
+━━━━━━━━━━━━━━╪━━━━━━━━━━━━━━━━━━
+Kernel Space  │
+  ┌───────────▼──────────────┐
+  │  chardev  (file_ops)     │
+  │  ioctl · read · poll     │
+  └───────────┬──────────────┘
+  ┌───────────▼──────────────┐
+  │  Workqueue Poller 500ms  │
+  └───────────┬──────────────┘
+  ┌───────────▼──────────────┐
+  │  EWMA Anomaly Engine     │
+  │  (Q16.16 fixed-point)    │
+  └───────────┬──────────────┘
+  ┌───────────▼──────────────┐
+  │  kfifo Event Ring        │◀── sysfs / procfs
+  └──────────────────────────┘</pre>
+
+    <h2>3. Key Technical Components</h2>
+    <ul>
+      <li><strong>Character device</strong> — <code>open</code>, blocking <code>read</code>, <code>write</code> (quick-attach), <code>ioctl</code>, <code>poll</code></li>
+      <li><strong>Workqueue poller</strong> — <code>delayed_work</code> fires every 500 ms; reads RSS via <code>get_mm_rss()</code></li>
+      <li><strong>EWMA engine</strong> — Q16.16 fixed-point (no FPU); score = α·|ΔRSS| + (1−α)·prev</li>
+      <li><strong>kfifo ring</strong> — 512-slot lock-free producer; wait-queue for blocking <code>read()</code></li>
+      <li><strong>sysfs</strong> — <code>alpha_pct</code>, <code>threshold</code>, <code>poll_ms</code> tuneable live</li>
+      <li><strong>procfs</strong> — <code>/proc/neuroguard/summary</code> table of active sandboxes</li>
+    </ul>
+
+  </div>
+
+  <!-- ── Col 2 ── -->
+  <div>
+
+    <h2>4. Event &amp; ioctl Interface</h2>
+    <p>Each anomaly event dequeued via <code>read()</code>:</p>
+<pre>struct neuroguard_event {
+  pid_t  pid;
+  u64    timestamp_ns;
+  u32    anomaly_score;  /* Q16.16 */
+  s64    mem_delta_bytes;
+  u32    event_type;     /* ALERT / THROTTLE / KILL */
+  char   comm[16];
+};</pre>
+
+    <table>
+      <tr><th>ioctl Command</th><th>Purpose</th></tr>
+      <tr><td><code>NG_ATTACH_PID</code></td><td>Start monitoring a PID</td></tr>
+      <tr><td><code>NG_DETACH_PID</code></td><td>Stop monitoring a PID</td></tr>
+      <tr><td><code>NG_GET_SCORE</code></td><td>Read current EWMA score</td></tr>
+      <tr><td><code>NG_SET_ACTION</code></td><td>Set ALERT / THROTTLE / KILL</td></tr>
+    </table>
+
+    <h2>5. Demo Plan (April 26)</h2>
+    <ul>
+      <li>Load module → confirm <code>/dev/neuroguard</code> appears</li>
+      <li>Run <code>neuroguard-ctl monitor</code> in one terminal</li>
+      <li>Launch memory-bomb: allocates 80 MB bursts every 250 ms</li>
+      <li>Attach bomb's PID → watch live ALERT events with rising scores</li>
+      <li>Switch to THROTTLE → bomb stalls; switch to KILL → process exits</li>
+      <li>Live-tune alpha via sysfs; show faster/slower score response</li>
+      <li>Unload module; show clean <code>dmesg</code> teardown</li>
+    </ul>
+
+    <h2>6. Source Layout</h2>
+<pre>neuroguard/
+├── Makefile
+├── include/  neuroguard.h · ng_internal.h
+├── src/      main.c · chardev.c · events.c
+│             anomaly.c · poller.c
+│             sysfs.c · procfs.c
+├── tools/    neuroguard-ctl.c
+└── tests/    test_basic.sh · test_anomaly.c</pre>
+    <p style="font-size:9.5pt; color:#555;">
+      ~250 KB total source · <code>neuroguard.ko</code> &lt; 100 KB compiled.
+      Requires Linux 5.15+ and <code>linux-headers</code>.
+    </p>
+
+    <h2>7. Learning Outcomes</h2>
+    <p>
+      This project covers the full Linux driver stack: <code>file_operations</code>, ioctl, 
+      user↔kernel data transfer, kfifo, wait queues, workqueues, kobject/sysfs, seq_file/procfs, 
+      and <code>mm_struct</code> internals — alongside practical design tradeoffs in polling 
+      latency, statistical sensitivity, and safe in-kernel arithmetic.
+    </p>
+
+  </div>
+</div>
+
+<!-- ═══════════════════ FOOTER ═══════════════════ -->
+<div class="footer">
+  <span>NeuroGuard — Device Driver Idea Submission &nbsp;|&nbsp; Yuval &amp; Prajakta</span>
+  <span>April 15, 2026</span>
+</div>
+
+</body>
+</html>
