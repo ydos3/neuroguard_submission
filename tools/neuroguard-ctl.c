@@ -10,10 +10,7 @@
 #include <time.h>
 #include <sys/ioctl.h>
 
-#define __u32  unsigned int
-#define __u64  unsigned long long
-#define __s64  long long
-#define __s32  int
+
 #include "../include/neuroguard.h"
 
 #define DEVICE_PATH  "/dev/neuroguard"
@@ -35,7 +32,7 @@ static const char *event_type_str(unsigned int t)
 
 static void print_event(const struct neuroguard_event *ev)
 {
-    struct timespec ts;
+
     char tstr[32];
     time_t sec = (time_t)(ev->timestamp_ns / 1000000000ULL);
     struct tm *tm_info = localtime(&sec);
