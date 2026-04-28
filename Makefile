@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+# SPDX-License-Identifier: GPL-2.0
 obj-m += neuroguard.o
 
 neuroguard-objs := src/main.o     \
